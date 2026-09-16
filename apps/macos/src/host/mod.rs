@@ -137,6 +137,14 @@ pub struct Host {
     /// 英文模式是否给英文候选（配置 `[general] english_candidates`）。
     pub english_candidates: bool,
 
+    /// 单击 Shift 切中 / 英（配置 `[shortcut] shift_switches_english`）。
+    /// 开着时中英由 [`Host::english`] 这个软件状态定，Caps Lock 还原成系统的大写锁定。
+    pub shift_switches_english: bool,
+
+    /// 单击 Shift 切出来的英文模式。只在 [`Host::shift_switches_english`] 开着时作数；
+    /// 关着时中英一律看 Caps Lock，见 [`Host::english_mode`]。
+    pub english: bool,
+
     /// 上次从系统读到的文本替换（激活输入法时重读），`[general] system_text_replacements` 开着时并进自定义短语。
     text_replacements: Vec<TextReplacement>,
 
@@ -173,6 +181,30 @@ pub struct Host {
 
     /// 最近一次绘制时的光标矩形，联想结果到达后在同一位置重画。
     pub anchor: NSRect,
+}
+
+impl Host {
+    /// 此刻是不是英文模式。两种来源二选一，不叠加：单击 Shift 切换开着时只认软件状态
+    /// （Caps Lock 交还系统当大写锁定用），关着时只认 Caps Lock（macOS 版一直以来的做法）。
+    pub fn english_mode(&self) -> bool {
+        if self.shift_switches_english {
+            self.english
+        } else {
+            crate::imk::modifiers::caps_lock_on()
+        }
+    }
+
+    /// 单击 Shift：翻转英文模式并刷新菜单栏。调用方负责先把组句中的拼音上屏。
+    /// 切换键关着时什么都不做（配置刚被改掉的那一下可能还有事件在路上）。
+    pub fn toggle_english(&mut self) {
+        if !self.shift_switches_english {
+            return;
+        }
+        self.english = !self.english;
+        tracing::debug!(english = self.english, "单击 Shift 切换中 / 英");
+        let english = self.english;
+        self.indicator.update(english);
+    }
 }
 
 thread_local! {

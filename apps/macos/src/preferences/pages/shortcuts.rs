@@ -28,6 +28,9 @@ pub struct ShortcutsPage {
     /// 没在组句时敲 `?` 也进问字。
     question_mark: Retained<NSButton>,
 
+    /// 单击 Shift 切中 / 英。
+    shift_switches_english: Retained<NSButton>,
+
     /// 上屏第一个译词的修饰键。
     translation: Retained<KeyRecorder>,
 
@@ -58,7 +61,7 @@ impl ShortcutsPage {
         note(
             layout,
             mtm,
-            "选「，  。」时组句中敲逗号句号是翻页，不再是上屏加标点。",
+            "选「，  。」时组句中敲逗号句号是翻页，不再是上屏加标点；选「-  =」时组句中的 - 是翻页，不再进英文直输段（no-way）。",
         );
         let key_titles: Vec<String> = ModeKeys::CANDIDATES.iter().map(char::to_string).collect();
         let expression = row_popup(
@@ -93,6 +96,20 @@ impl ShortcutsPage {
             layout,
             mtm,
             "勾上后 ? 先进问字（中英文模式都行），后面跟字母才是问题，跟空格、回车等其他键时还原成问号；不勾问号就是问号。双拼下这是问字唯一的入口。",
+        );
+        layout.space(GROUP_GAP);
+        let shift_switches_english = checkbox(
+            mtm,
+            "单击 Shift 切换中 / 英",
+            Setting::ShiftSwitchesEnglish,
+            target,
+        );
+        row_checkbox(layout, &shift_switches_english);
+        note(
+            layout,
+            mtm,
+            "按下 Shift 再松开、中间没按别的键就切换；正在输入的拼音原样上屏（nihao 出 nihao）。\
+             勾上后 Caps Lock 还原成系统的大写锁定，不再切换中 / 英；不勾还是 Caps Lock 切换。",
         );
         layout.space(GROUP_GAP);
         let translation = row_recorder(
@@ -166,6 +183,7 @@ impl ShortcutsPage {
             expression,
             question,
             question_mark,
+            shift_switches_english,
             translation,
             translation_second,
             delete_candidate,
@@ -194,6 +212,10 @@ impl ShortcutsPage {
                 .position(|k| *k == keys.question),
         );
         set_checked(&self.question_mark, keys.question_mark);
+        set_checked(
+            &self.shift_switches_english,
+            config.shortcut.shift_switches_english,
+        );
         let (first, second) = config.shortcut.translation_keys();
         self.translation.show(&first.key(), &first.label());
         self.translation_second.show(&second.key(), &second.label());

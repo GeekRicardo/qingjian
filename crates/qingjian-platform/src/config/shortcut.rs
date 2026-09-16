@@ -23,6 +23,11 @@ pub struct ShortcutConfig {
 
     /// 数字键配这些修饰键：删掉候选（用户词整个删掉，词库词清掉对它的学习）。
     pub delete_candidate: Modifiers,
+
+    /// 单击 Shift（按下到抬起之间没有别的键）在中 / 英之间切换，组句中的拼音原样上屏。
+    /// macOS 打开后 Caps Lock 还原成系统的大写锁定，不再切换中英；Windows 一直是单击 Shift 切换，此项不起作用。
+    /// 缺省关：保持 macOS 版原有的 Caps Lock 切换。
+    pub shift_switches_english: bool,
 }
 
 impl Default for ShortcutConfig {
@@ -38,6 +43,7 @@ impl Default for ShortcutConfig {
             translation_second,
             translate_selection: KeyCombo::TRANSLATE_DEFAULT,
             delete_candidate: Modifiers::SHIFT,
+            shift_switches_english: false,
         }
     }
 }

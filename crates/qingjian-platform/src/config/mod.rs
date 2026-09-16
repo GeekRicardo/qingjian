@@ -131,6 +131,9 @@ translation_second = "shift+option"
 translate_selection = "control+option+t"
 # 数字键配这些修饰键删掉候选：用户词（云端选过的、自动造的）整个删掉，词库里的词清掉对它的学习记录。组句中要打感叹号先把词上屏
 delete_candidate = "shift"
+# 单击 Shift（按下到抬起之间没按别的键）切换中 / 英，正在输入的拼音原样上屏（nihao 出 nihao）
+# true 时 Caps Lock 还原成系统的大写锁定，不再切换中 / 英；false 仍由 Caps Lock 切换
+shift_switches_english = false
 "#
     };
 }
@@ -161,7 +164,8 @@ pub const TEMPLATE: &str = concat!(
 learning_language = "en"
 # 每页候选数（1–9）
 page_size = 9
-# 翻页键对：前一个上一页、后一个下一页。可选 "[]" 或 ",."；选 ",." 的话组句中敲逗号句号是翻页而不是上屏加标点
+# 翻页键对：前一个上一页、后一个下一页。可选 "[]"、",." 或 "-="
+# 选 ",." 的话组句中敲逗号句号是翻页而不是上屏加标点；选 "-=" 的话组句中的 - 是翻页，不再进英文直输段（no-way）
 page_keys = "[]"
 # 候选窗口外观：system 跟随系统 / light 浅色 / dark 深色
 theme = "system"

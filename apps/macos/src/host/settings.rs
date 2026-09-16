@@ -211,6 +211,10 @@ impl Host {
             (Setting::QuestionMark, SettingValue::Bool(on)) => {
                 self.settings.set_bool("shortcut", "question_mark", on);
             }
+            (Setting::ShiftSwitchesEnglish, SettingValue::Bool(on)) => {
+                self.settings
+                    .set_bool("shortcut", "shift_switches_english", on);
+            }
             (Setting::ExpressionKey | Setting::QuestionKey, SettingValue::Index(index)) => {
                 if let Some(&key) = ModeKeys::CANDIDATES.get(index) {
                     let mut keys = config.shortcut.mode.sanitized();
@@ -286,6 +290,11 @@ impl Host {
                     .set_value("shortcut", "question", defaults.mode.question.to_string());
                 self.settings
                     .set_bool("shortcut", "question_mark", defaults.mode.question_mark);
+                self.settings.set_bool(
+                    "shortcut",
+                    "shift_switches_english",
+                    defaults.shift_switches_english,
+                );
                 self.settings
                     .set_value("shortcut", "translation", defaults.translation.key());
                 self.settings.set_value(

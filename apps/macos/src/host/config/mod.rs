@@ -31,6 +31,11 @@ impl Host {
         self.page_keys = config.general.page_keys();
         self.preedit_mode = config.general.preedit;
         self.english_candidates = config.general.english_candidates;
+        // 切换键刚被关掉：软件模式位留着也没人看，清掉免得下次再打开时莫名其妙停在英文
+        self.shift_switches_english = config.shortcut.shift_switches_english;
+        if !self.shift_switches_english {
+            self.english = false;
+        }
         self.apps = config.apps.clone();
         self.window.set_theme(config.general.theme);
         self.window.set_layout(config.general.layout);
@@ -80,7 +85,8 @@ impl Host {
         }
         let cloud_active = self.engine.prediction_enabled();
         self.indicator.set_cloud(cloud_active);
-        self.indicator.update();
+        let english = self.english_mode();
+        self.indicator.update(english);
         self.menu.sync(&config, cloud_active, self.settings.error());
         let key_present = config
             .predict
