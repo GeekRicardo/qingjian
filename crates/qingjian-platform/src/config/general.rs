@@ -11,14 +11,14 @@ pub const MAX_PAGE_SIZE: usize = 9;
 /// 拿它们翻页就得先按空格再敲标点。选 `-` `=` 时组句中的 `-` 是翻页，不再进英文直输段（#43）。
 pub const PAGE_KEY_OPTIONS: [&str; 3] = ["[]", ",.", "-="];
 
-/// 候选词字号的可选范围（点）。下限还看得清，上限够老花眼用，再大候选窗就占半个屏幕了。
-pub const FONT_SIZE_RANGE: std::ops::RangeInclusive<u32> = 12..=32;
+/// 候选词字号的可选范围（点）。下限还看得清，上限是一行候选还能摆得下的极限。
+pub const FONT_SIZE_RANGE: std::ops::RangeInclusive<u32> = 12..=64;
 
 /// 缺省候选词字号（点），与 `qingjian-render` 的 `Theme::BASE_FONT_SIZE` 一致。
 pub const DEFAULT_FONT_SIZE: u32 = 16;
 
 /// 设置界面里列出的字号，都在 [`FONT_SIZE_RANGE`] 内；配置文件可以写区间内任意整数。
-pub const FONT_SIZE_OPTIONS: [u32; 8] = [12, 14, 16, 18, 20, 24, 28, 32];
+pub const FONT_SIZE_OPTIONS: [u32; 11] = [12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 64];
 
 /// 缺省翻页键对，与 [`PAGE_KEY_OPTIONS`] 第一项一致。
 pub const DEFAULT_PAGE_KEYS: (char, char) = ('[', ']');
@@ -181,6 +181,8 @@ mod tests {
         assert_eq!(general.font_size(), 24);
         general.font_size = 4;
         assert_eq!(general.font_size(), *FONT_SIZE_RANGE.start());
+        general.font_size = 40;
+        assert_eq!(general.font_size(), 40);
         general.font_size = 999;
         assert_eq!(general.font_size(), *FONT_SIZE_RANGE.end());
     }
