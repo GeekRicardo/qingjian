@@ -211,6 +211,12 @@ impl Host {
             (Setting::QuestionMark, SettingValue::Bool(on)) => {
                 self.settings.set_bool("shortcut", "question_mark", on);
             }
+            (Setting::FontSize, SettingValue::Index(index)) => {
+                if let Some(&size) = FONT_SIZE_OPTIONS.get(index) {
+                    self.settings
+                        .set_value("general", "font_size", i64::from(size));
+                }
+            }
             (Setting::ShiftSwitchesEnglish, SettingValue::Bool(on)) => {
                 self.settings
                     .set_bool("shortcut", "shift_switches_english", on);

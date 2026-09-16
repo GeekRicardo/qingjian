@@ -45,6 +45,10 @@ pub struct Ivars {
 
     /// 用户选的字族名（空为系统字体），换了要重建渲染器。
     font: RefCell<String>,
+
+    /// 候选词字号（点，配置 `[general] font_size`）。与字族一样只对青简渲染器生效：
+    /// AppKit 那条路的字体在 [`Theme`] 里定死，它只是渲染器建不起来时的退路。
+    font_size: Cell<u32>,
 }
 
 /// preedit 光标的宽度。
@@ -120,6 +124,7 @@ impl CandidateView {
             theme,
             bitmap: RefCell::new(None),
             font: RefCell::new(String::new()),
+            font_size: Cell::new(qingjian_platform::DEFAULT_FONT_SIZE),
         });
         unsafe { msg_send![super(this), initWithFrame: NSRect::ZERO] }
     }
@@ -132,7 +137,21 @@ impl CandidateView {
         *self.ivars().font.borrow_mut() = font.to_owned();
         let mut bitmap = self.ivars().bitmap.borrow_mut();
         if bitmap.is_some() {
-            *bitmap = BitmapPainter::new(font);
+            *bitmap = BitmapPainter::new(font, self.ivars().font_size.get());
+            drop(bitmap);
+            self.setNeedsDisplay(true);
+        }
+    }
+
+    /// 候选词字号（点），只对青简渲染器生效。渲染器在用就当场重建。
+    pub fn set_font_size(&self, size: u32) {
+        if self.ivars().font_size.get() == size {
+            return;
+        }
+        self.ivars().font_size.set(size);
+        let mut bitmap = self.ivars().bitmap.borrow_mut();
+        if bitmap.is_some() {
+            *bitmap = BitmapPainter::new(&self.ivars().font.borrow(), size);
             drop(bitmap);
             self.setNeedsDisplay(true);
         }
@@ -143,7 +162,8 @@ impl CandidateView {
         let mut bitmap = self.ivars().bitmap.borrow_mut();
         match renderer {
             CandidateRenderer::Qingjian if bitmap.is_none() => {
-                *bitmap = BitmapPainter::new(&self.ivars().font.borrow());
+                *bitmap =
+                    BitmapPainter::new(&self.ivars().font.borrow(), self.ivars().font_size.get());
             }
             CandidateRenderer::System if bitmap.is_some() => {
                 tracing::info!("候选窗切回 AppKit 绘制");

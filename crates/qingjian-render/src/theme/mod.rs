@@ -43,6 +43,19 @@ pub struct Theme {
 }
 
 impl Theme {
+    /// 缺省候选词字号（点）。译文与序号字体、各自的行高都按它的比例缩放，见 [`Theme::with_font_size`]。
+    pub const BASE_FONT_SIZE: f32 = 16.0;
+
+    /// 按候选词字号缩放三种字体（配置 `[general] font_size`）。
+    /// 间距与圆角不动：调的是字的大小，不是整个窗口的缩放——窗口本来就按内容量出来。
+    pub fn with_font_size(mut self, size: f32) -> Self {
+        let scale = size / Self::BASE_FONT_SIZE;
+        self.text_font = self.text_font.scaled(scale);
+        self.annotation_font = self.annotation_font.scaled(scale);
+        self.index_font = self.index_font.scaled(scale);
+        self
+    }
+
     /// 浅色，对齐 macOS 系统外观。
     pub fn light() -> Self {
         Self::with_palette(Palette::light(), 0.85)
@@ -67,5 +80,31 @@ impl Theme {
             max_rows: 9,
             text_gamma,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn base_font_size_is_a_no_op() {
+        let theme = Theme::light();
+        let scaled = Theme::light().with_font_size(Theme::BASE_FONT_SIZE);
+        assert_eq!(scaled.text_font, theme.text_font);
+        assert_eq!(scaled.annotation_font, theme.annotation_font);
+        assert_eq!(scaled.index_font, theme.index_font);
+    }
+
+    #[test]
+    fn fonts_and_line_heights_scale_together_and_spacing_stays() {
+        let theme = Theme::light().with_font_size(24.0);
+        assert_eq!(theme.text_font.size, 24.0);
+        assert_eq!(theme.text_font.line_height, 19.0 * 1.5);
+        assert_eq!(theme.annotation_font.size, 18.0);
+        assert_eq!(theme.index_font.size, 11.0 * 1.5);
+        // 间距不跟着字号走
+        assert_eq!(theme.padding, Theme::light().padding);
+        assert_eq!(theme.column_gap, Theme::light().column_gap);
     }
 }

@@ -36,13 +36,17 @@ pub struct BitmapPainter {
     /// 最近一帧的倍数。
     scale: f32,
 
+    /// 候选词字号（点，配置 `[general] font_size`）；译文与序号按比例跟着走。
+    font_size: f32,
+
     /// 最近一帧的尺寸（点）。
     size: NSSize,
 }
 
 impl BitmapPainter {
     /// `font` 是用户选的字族名，空为系统字体；没装就回到系统字体。字体库加载失败返回 `None`，调用方退回旧路径。
-    pub fn new(font: &str) -> Option<Self> {
+    /// `font_size` 是候选词字号（点）。
+    pub fn new(font: &str, font_size: u32) -> Option<Self> {
         let started = std::time::Instant::now();
         let font = font.trim();
         let library = if font.is_empty() {
@@ -73,6 +77,7 @@ impl BitmapPainter {
             layout: Layout::Vertical,
             dark: false,
             scale: 2.0,
+            font_size: font_size as f32,
             size: NSSize::ZERO,
         })
     }
@@ -125,7 +130,8 @@ impl BitmapPainter {
             Theme::dark()
         } else {
             Theme::light()
-        };
+        }
+        .with_font_size(self.font_size);
         let started = std::time::Instant::now();
         let rendered =
             match self

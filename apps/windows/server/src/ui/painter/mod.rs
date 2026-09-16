@@ -21,11 +21,15 @@ pub(super) struct Painter {
 
     /// 建它时用的字族名（空为系统字体），设置没变就不重建。
     font: String,
+
+    /// 候选词字号（点，`[general] font_size`）；译文与序号按比例跟着走。
+    font_size: f32,
 }
 
 impl Painter {
     /// `font` 是用户选的字族名，空为系统字体；没装就回到系统字体。字体库加载失败返回 `None`，调用方退回 GDI。
-    fn new(font: &str) -> Option<Self> {
+    /// `font_size` 是候选词字号（点）。
+    fn new(font: &str, font_size: u32) -> Option<Self> {
         let started = std::time::Instant::now();
         let library = if font.is_empty() {
             FontLibrary::system("zh-CN")
@@ -51,6 +55,7 @@ impl Painter {
         Some(Self {
             renderer: Renderer::new(library),
             font: font.to_owned(),
+            font_size: font_size as f32,
         })
     }
 
@@ -59,8 +64,9 @@ impl Painter {
         let mut painter = shared.borrow_mut();
         match settings.renderer {
             CandidateRenderer::Qingjian => {
-                if painter.as_ref().map(|p| p.font.as_str()) != Some(settings.font.as_str()) {
-                    *painter = Self::new(&settings.font);
+                let current = painter.as_ref().map(|p| (p.font.as_str(), p.font_size));
+                if current != Some((settings.font.as_str(), settings.font_size as f32)) {
+                    *painter = Self::new(&settings.font, settings.font_size);
                 }
             }
             CandidateRenderer::System => {
@@ -87,7 +93,13 @@ impl Painter {
         let started = std::time::Instant::now();
         let rendered = self
             .renderer
-            .render(frame, layout, &theme(dark), scale(dpi), Some(&SHADOW))
+            .render(
+                frame,
+                layout,
+                &theme(dark).with_font_size(self.font_size),
+                scale(dpi),
+                Some(&SHADOW),
+            )
             .inspect_err(|error| tracing::warn!(%error, "候选窗渲染失败"))
             .ok()?;
         tracing::debug!(

@@ -11,6 +11,15 @@ pub const MAX_PAGE_SIZE: usize = 9;
 /// 拿它们翻页就得先按空格再敲标点。选 `-` `=` 时组句中的 `-` 是翻页，不再进英文直输段（#43）。
 pub const PAGE_KEY_OPTIONS: [&str; 3] = ["[]", ",.", "-="];
 
+/// 候选词字号的可选范围（点）。下限还看得清，上限够老花眼用，再大候选窗就占半个屏幕了。
+pub const FONT_SIZE_RANGE: std::ops::RangeInclusive<u32> = 12..=32;
+
+/// 缺省候选词字号（点），与 `qingjian-render` 的 `Theme::BASE_FONT_SIZE` 一致。
+pub const DEFAULT_FONT_SIZE: u32 = 16;
+
+/// 设置界面里列出的字号，都在 [`FONT_SIZE_RANGE`] 内；配置文件可以写区间内任意整数。
+pub const FONT_SIZE_OPTIONS: [u32; 8] = [12, 14, 16, 18, 20, 24, 28, 32];
+
 /// 缺省翻页键对，与 [`PAGE_KEY_OPTIONS`] 第一项一致。
 pub const DEFAULT_PAGE_KEYS: (char, char) = ('[', ']');
 
@@ -41,6 +50,9 @@ pub struct GeneralConfig {
 
     /// 候选窗口字体的字族名；空为系统字体。只对青简渲染器生效，没装这个字体时回到系统字体。
     pub font: String,
+
+    /// 候选词字号（点）；译文与序号按比例跟着走。与 [`GeneralConfig::font`] 一样只对青简渲染器生效。
+    pub font_size: u32,
 
     /// 组句中的拼音显示在行内、候选窗口还是两处都显示。
     pub preedit: PreeditMode,
@@ -89,6 +101,7 @@ impl Default for GeneralConfig {
             layout: LayoutMode::default(),
             renderer: CandidateRenderer::default(),
             font: String::new(),
+            font_size: DEFAULT_FONT_SIZE,
             preedit: PreeditMode::default(),
             english_candidates: true,
             chinese_first: false,
@@ -132,6 +145,12 @@ impl GeneralConfig {
         self.page_size.clamp(1, MAX_PAGE_SIZE)
     }
 
+    /// 夹到 [`FONT_SIZE_RANGE`] 的候选词字号。
+    pub fn font_size(&self) -> u32 {
+        self.font_size
+            .clamp(*FONT_SIZE_RANGE.start(), *FONT_SIZE_RANGE.end())
+    }
+
     /// 翻页键对；写得不对（不是两个不同的 ASCII 可见字符）时退回缺省。
     pub fn page_keys(&self) -> (char, char) {
         let mut chars = self.page_keys.chars();
@@ -153,6 +172,18 @@ impl GeneralConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn font_size_is_clamped_to_the_allowed_range() {
+        let mut general = GeneralConfig::default();
+        assert_eq!(general.font_size(), DEFAULT_FONT_SIZE);
+        general.font_size = 24;
+        assert_eq!(general.font_size(), 24);
+        general.font_size = 4;
+        assert_eq!(general.font_size(), *FONT_SIZE_RANGE.start());
+        general.font_size = 999;
+        assert_eq!(general.font_size(), *FONT_SIZE_RANGE.end());
+    }
 
     #[test]
     fn page_size_and_keys_are_sanitized() {
