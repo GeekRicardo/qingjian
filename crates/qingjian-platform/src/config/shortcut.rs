@@ -100,6 +100,20 @@ mod tests {
         assert_eq!(swapped.translation_keys().1, Modifiers::OPTION);
     }
 
+    /// flatten 的 ModeKeys 与同级具名字段混在一节里，两边都要解析得出来。
+    #[test]
+    fn shift_switch_parses_next_to_the_flattened_mode_keys() {
+        let parsed: ShortcutConfig = toml::from_str(
+            "expression = \"v\"\nquestion = \"u\"\ndelete_candidate = \"shift\"\nshift_switches_english = true\n",
+        )
+        .unwrap();
+        assert_eq!(parsed.mode.expression, 'v');
+        assert!(
+            parsed.shift_switches_english,
+            "shift_switches_english 被 flatten 吃掉了"
+        );
+    }
+
     #[test]
     fn delete_keys_fall_back_when_clashing_with_translation_keys() {
         let parsed: ShortcutConfig = toml::from_str("").unwrap();

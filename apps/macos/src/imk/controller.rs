@@ -740,16 +740,19 @@ impl QingjianInputController {
     ///
     /// **一律返回 `false`**：修饰键事件吃掉的话，应用就收不到 Shift 了（选区、大写全得废）。
     fn handle_flags_changed(&self, event: &NSEvent, client: TextClient<'_>) -> bool {
-        if !host::with(|h| h.shift_switches_english).unwrap_or(false) {
-            return false;
-        }
         let flags = event.modifierFlags();
         let others = flags.intersects(
             NSEventModifierFlags::Command
                 | NSEventModifierFlags::Control
                 | NSEventModifierFlags::Option,
         );
+        // 判定放在开关前面：开关关着时状态机照样跟着走，免得中途打开时停在半截状态
         if !shift_tap::flags_changed(flags.contains(NSEventModifierFlags::Shift), others) {
+            return false;
+        }
+        let enabled = host::with(|h| h.shift_switches_english).unwrap_or(false);
+        tracing::debug!(enabled, "检测到单击 Shift");
+        if !enabled {
             return false;
         }
         // 组句中切模式：敲下的拼音原样上屏（`nihao` 出 nihao），不是丢掉也不是上屏首选
